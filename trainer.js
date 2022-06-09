@@ -1,16 +1,23 @@
-/*
-Train the model
-*/
-
 const natural = require('natural');
 const brain = require('brain.js');
 const fs = require("fs");
+const path = require("path");
+
+const network = new brain.NeuralNetwork(
+    {
+        hiddenLayers: [10, 10],
+        learningRate: 0.01,
+        activation: 'sigmoid'
+    }
+);
 
 const badwords = require('./badwordslist.json');
 const goodwords = require('./goodwordslist.json');
 
-const network = new brain.recurrent.LSTM();
+//Append goodwors and badwords
+var rawdata = goodwords.concat(badwords);
 
+console.log(rawdata);
 
 function stem(str) {
     return natural.PorterStemmer.stem(str);
@@ -21,34 +28,57 @@ function tokenizer(str) {
     return tokenizer.tokenize(str);
 }
 
-function createWordDictionary(words) {
-    var wordDictionary = {};
-    words.forEach(word => {
-        var tokenizedWord = tokenizer(word.input);
-        tokenizedWord.forEach(token => {
-            wordDictionary[stem(token)] = word.output;
-        });
-    });
+function createDictionary(rawdata){
+    var tokenidedArray = rawdata.map(function(item){
+        const tokens = item.input.split(' ')
+        return tokens.map(token => natural.PorterStemmer.stem(token))
+    })
+    //return tokenidedArray in single string array
+    return tokenidedArray.reduce((acc, cur) => acc.concat(cur), []);
 }
 
-console.log(words);
+var dictionary = createDictionary(rawdata);
+
+function encode(str){
+    /*
+    Create one vector with 0 with length of dictionary~
+    Verify for each tokenized string in str if it is in dictionary
+    if it is, set the index of the tokenized string to 1
+    if not just leave it as 0
+    */
+    var encoded = [];
+    var tokens = tokenizer(str);
+    for(var i = 0; i < dictionary.length; i++){
+        if(tokens.includes(dictionary[i])){
+            encoded.push(1);
+        }else{
+            encoded.push(0);
+        }
+    }
+    return encoded;
+}
 
 
+function testEncode(){
+    var encoded = encode("I am a bad person and I am a good person cum, pusy 2g1c");
+    var encodedPath = path.join(__dirname, "encoded.json");
+    fs.writeFileSync(encodedPath, JSON.stringify(encoded));
+}
 
+let encodedTrainingdata = rawdata.map(function(item){
+    return {
+        input: encode(item.input),
+        output: item.output
+    }
+});
 
+//Train with logging
+network.train(encodedTrainingdata, {
+    iterations: 20000,
+    log: true,
+    errorThresh: 0.005
+});
 
-// const model = data.map(item => ({
-//     input: item.input,
-//     output: item.output
-// }));
-// console.log(model);
-
-// const training = network.train(model, {
-//     iterations: 300,
-//     log: (error) => console.log(error)
-// });
-
-
-// const json = JSON.stringify(network.toJSON());
-// fs.writeFileSync("./model.json", json);
-// console.log("Model saved");
+const json = JSON.stringify(network.toJSON());
+fs.writeFileSync("./model.json", json);
+console.log("Model saved");
