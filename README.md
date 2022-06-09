@@ -15,6 +15,10 @@ Tokenizer ➡ Stemmer ➡ BoW ➡ Model training(Sigmoid, [10, 10]hidden layers)
 Datasets:
 
 1909 bad words in dataset📚
+- English
+- German
+- Japnese
+- Portuguese
 - badwordslist.json 
 - bad-words.txt
 
