@@ -1,0 +1,16 @@
+{
+  "name": "bad_words",
+  "version": "1.0.0",
+  "description": "",
+  "main": "badwords.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "brain.js": "^2.0.0-beta.15",
+    "natural": "^5.2.2"
+  }
+}
